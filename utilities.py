@@ -3,8 +3,12 @@ import pandas as pd
 
 
 def load_data(tickers, start="2020-01-01", end="2024-01-01"):
-    data = yf.download(tickers, start=start, end=end)["Adj Close"]
-    data = data.dropna(axis=1, how="any")  # remove broken tickers
+    data = yf.download(tickers, start=start, end=end, auto_adjust=True)
+    if 'Close' in data.columns:
+        data = data['Close']
+    else:
+        data = data['Adj Close']
+    data = data.dropna(axis=1, how="any")
     return data
 
 def compute_returns(prices):
@@ -25,7 +29,9 @@ def backtest(returns, portfolio):
 
         weights = weights / weights.sum()  # equal weight
 
-        daily_ret = (weights * returns.loc[date]).sum()
+        shifted_ret = returns.shift(-1)
+
+        daily_ret = (weights * shifted_ret.loc[date]).sum()
         portfolio_returns.append(daily_ret)
 
     return pd.Series(portfolio_returns, index=returns.index[:len(portfolio_returns)])
