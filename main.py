@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 
-from momentum import momentum_factor, volatility_factor, combine_factors, select_portfolio
+from momentum import momentum_factor, volatility_factor, combine_factors, select_portfolio, sharpe_ratio
 from utilities import load_data, compute_returns, backtest
 
 tickers = ["AAPL", "MSFT", "GOOG", "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
@@ -42,4 +42,5 @@ print("Votality: ", volatility)
 print("Returns: ", returns)
 print("Portfolio: ", portfolio)
 print("Portfolio Returns: ", portfolio_returns)
+print("Sharpe: ", sharpe_ratio(portfolio_returns))
 print("Cumulative Returns: ", cumulative)
