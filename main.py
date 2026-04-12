@@ -25,6 +25,8 @@ benchmark_cum = (1 + benchmark_returns.squeeze()).cumprod()
 portfolio_returns = backtest(returns, portfolio)
 
 cumulative = (1 + portfolio_returns).cumprod()
+cost = 0.001  # 0.1%
+# net_returns = portfolio_returns - turnover * cost
 
 plt.figure()
 plt.plot(cumulative)
@@ -44,3 +46,21 @@ print("Portfolio: ", portfolio)
 print("Portfolio Returns: ", portfolio_returns)
 print("Sharpe: ", sharpe_ratio(portfolio_returns))
 print("Cumulative Returns: ", cumulative)
+
+# Test
+
+configs = [
+    {"momentum": 0.7, "volatility": -0.3},
+    {"momentum": 0.5, "volatility": -0.5},
+    {"momentum": 1.0, "volatility": -0.2},
+    {"momentum": 1.5, "volatility": 0.1},
+    {"momentum": 2.0, "volatility": 0.4},
+
+]
+
+for config in configs:
+    score = combine_factors(momentum, volatility, config)
+    portfolio = select_portfolio(score, top_n=3)
+    returns = backtest(returns, portfolio)
+
+    print("Config",config, "Sharpe Ratio",sharpe_ratio(returns))

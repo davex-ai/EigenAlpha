@@ -11,6 +11,8 @@ def load_data(tickers, start="2020-01-01", end="2024-01-01"):
     data = data.dropna(axis=1, how="any")
     return data
 
+def compute_turnover(portfolio):
+    return portfolio.diff().abs().sum(axis=1)
 
 def compute_returns(prices):
     returns = prices.pct_change().dropna()
