@@ -1,31 +1,22 @@
-import yfinance as yf
-import pandas as pd
 
+import matplotlib.pyplot as plt
 
-def load_data(tickers, start="2020-01-01", end="2024-01-01"):
-    data = yf.download(tickers, start=start, end=end)["Adj Close"]
-    data = data.dropna(axis=1, how="any")  # remove broken tickers
-    return data
+tickers = ["AAPL", "MSFT", "GOOG", "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
 
-def compute_returns(prices):
-    returns = prices.pct_change().dropna()
-    return returns
+prices = load_data(tickers)
+returns = compute_returns(prices)
 
-def backtest(returns, portfolio):
-    portfolio_returns = []
+momentum = momentum_factor(prices)
+volatility = volatility_factor(returns)
 
-    for date in returns.index:
-        if date not in portfolio.index:
-            continue
+scores = combine_factors(momentum, volatility)
+portfolio = select_portfolio(scores)
 
-        weights = portfolio.loc[date]
-        if weights.sum() == 0:
-            portfolio_returns.append(0)
-            continue
+portfolio_returns = backtest(returns, portfolio)
 
-        weights = weights / weights.sum()  # equal weight
+cumulative = (1 + portfolio_returns).cumprod()
 
-        daily_ret = (weights * returns.loc[date]).sum()
-        portfolio_returns.append(daily_ret)
-
-    return pd.Series(portfolio_returns, index=returns.index[:len(portfolio_returns)])
+plt.figure()
+plt.plot(cumulative)
+plt.title("Portfolio Performance")
+plt.show()
