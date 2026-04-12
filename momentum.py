@@ -1,3 +1,5 @@
+import numpy as np
+
 def momentum_factor(prices, window=60):
     return prices.pct_change(window)
 
@@ -13,3 +15,8 @@ def combine_factors(momentum, volatility):
 
     score = mom_z - vol_z
     return score
+
+def select_portfolio(scores, top_n=10):
+    ranks = scores.rank(axis=1, ascending=False)
+    portfolio = ranks <= top_n
+    return portfolio.astype(int)
