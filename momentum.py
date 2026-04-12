@@ -17,6 +17,9 @@ def combine_factors(momentum, volatility):
     score = mom_z - vol_z
     return score
 
+def sharpe_ratio(returns):
+    return returns.mean() / returns.std() * np.sqrt(252)
+
 def select_portfolio(scores, top_n=3):
     ranks = scores.rank(axis=1, ascending=False)
     portfolio = ranks <= top_n

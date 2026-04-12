@@ -17,6 +17,11 @@ scores = combine_factors(momentum, volatility)
 scores = scores.where(valid)
 portfolio = select_portfolio(scores)
 
+benchmark = load_data(["SPY"])
+benchmark_returns = compute_returns(benchmark)
+
+benchmark_cum = (1 + benchmark_returns.squeeze()).cumprod()
+
 portfolio_returns = backtest(returns, portfolio)
 
 cumulative = (1 + portfolio_returns).cumprod()
@@ -25,6 +30,9 @@ plt.figure()
 plt.plot(cumulative)
 plt.title("Portfolio Performance")
 plt.show()
+plt.plot(cumulative, label="Strategy")
+plt.plot(benchmark_cum, label="Benchmark")
+plt.legend()
 
 print("Scores: ", scores)
 print("Prices: ", prices)
