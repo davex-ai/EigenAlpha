@@ -1,7 +1,6 @@
 import yfinance as yf
 import pandas as pd
 
-
 def load_data(tickers, start="2020-01-01", end="2024-01-01"):
     data = yf.download(tickers, start=start, end=end, auto_adjust=True)
     if 'Close' in data.columns:
@@ -10,6 +9,7 @@ def load_data(tickers, start="2020-01-01", end="2024-01-01"):
         data = data['Adj Close']
     data = data.dropna(axis=1, how="any")
     return data
+
 
 def compute_turnover(portfolio):
     return portfolio.diff().abs().sum(axis=1)
@@ -38,3 +38,27 @@ def backtest(returns, portfolio):
         portfolio_returns.append(daily_ret)
 
     return pd.Series(portfolio_returns, index=returns.index[:len(portfolio_returns)])
+
+FACTORS = {}
+
+def register_factor(name):
+    def wrapper(fn):
+        FACTORS[name] = fn
+        return fn
+    return wrapper
+
+@register_factor("momentum")
+def momentum_factor(prices, returns, window=60):
+    return prices.pct_change(window)
+
+@register_factor("volatility")
+def volatility_factor(prices, returns, window=60):
+    return returns.rolling(window).std()
+
+def compute_factors(prices, returns):
+    results = {}
+
+    for name, fn in FACTORS.items():
+        results[name] = fn(prices, returns)
+
+    return results
