@@ -18,8 +18,14 @@ def combine_factors(momentum, volatility, weights):
     score = weights["momentum"] * mom_z - weights["volatility"] * vol_z
     return score
 
-def sharpe_ratio(returns):
-    return returns.mean() / returns.std() * np.sqrt(252)
+def sharpe_ratio(returns, risk_free_rate=0.0):
+    excess_returns = returns - risk_free_rate / 252
+    std = excess_returns.std()
+
+    if std == 0 or np.isnan(std):
+        return 0
+
+    return np.sqrt(252) * excess_returns.mean() / std
 
 def select_portfolio(scores, top_n=3):
     ranks = scores.rank(axis=1, ascending=False)
