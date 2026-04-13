@@ -1,6 +1,9 @@
 import yfinance as yf
 import pandas as pd
 
+from main import strategy_returns, cost, apply_transaction_costs
+
+
 def load_data(tickers, start="2020-01-01", end="2024-01-01"):
     data = yf.download(tickers, start=start, end=end, auto_adjust=True)
     if 'Close' in data.columns:
@@ -18,26 +21,14 @@ def compute_returns(prices):
     returns = prices.pct_change().dropna()
     return returns
 
-def backtest(returns, portfolio):
-    portfolio_returns = []
-
-    for date in returns.index:
-        if date not in portfolio.index:
-            continue
-
-        weights = portfolio.loc[date]
-        if weights.sum() == 0:
-            portfolio_returns.append(0)
-            continue
-
-        weights = weights / weights.sum()  # equal weight
-
-        shifted_ret = returns.shift(-1)
-
-        daily_ret = (weights * shifted_ret.loc[date]).sum()
-        portfolio_returns.append(daily_ret)
-
-    return pd.Series(portfolio_returns, index=returns.index[:len(portfolio_returns)])
+def backtest(returns, portfolio, cost=0.001):
+    shifted_returns = returns.shift(-1)
+    weights = portfolio.div(portfolio.sum(axis=1), axis=0).fillna(0)
+    gross_returns = (weights * shifted_returns).sum(axis=1)
+    turnover = portfolio.diff().abs().sum(axis=1)
+    costs = turnover * cost
+    net_returns = gross_returns - costs
+    return net_returns
 
 FACTORS = {}
 
@@ -47,14 +38,6 @@ def register_factor(name):
         return fn
     return wrapper
 
-@register_factor("momentum")
-def momentum_factor(prices, returns, window=60):
-    return prices.pct_change(window)
-
-@register_factor("volatility")
-def volatility_factor(prices, returns, window=60):
-    return returns.rolling(window).std()
-
 def compute_factors(prices, returns):
     results = {}
 
@@ -62,3 +45,4 @@ def compute_factors(prices, returns):
         results[name] = fn(prices, returns)
 
     return results
+

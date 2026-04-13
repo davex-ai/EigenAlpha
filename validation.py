@@ -4,7 +4,6 @@ import pandas as pd
 
 def information_coefficient(factor, future_returns):
     aligned = factor.align(future_returns, join="inner")[0]
-
     ic = aligned.corrwith(future_returns, axis=1)
     return ic.mean()
 

@@ -1,16 +1,14 @@
 
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from momentum import momentum_factor, volatility_factor, combine_factors, select_portfolio, sharpe_ratio
-from utilities import load_data, compute_returns, backtest, compute_factors
-from validation import information_coefficient, factor_return
+from utilities import load_data, compute_returns, backtest, compute_factors, compute_turnover
+from validation import evaluate_factors
 
 tickers = ["AAPL", "MSFT", "GOOG", "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
 
 prices = load_data(tickers)
 returns = compute_returns(prices)
-print("Data loaded: ", prices)
 
 momentum = momentum_factor(prices)
 volatility = volatility_factor(returns)
@@ -29,28 +27,11 @@ portfolio_returns = backtest(returns, portfolio)
 
 cumulative = (1 + portfolio_returns).cumprod()
 cost = 0.001  # 0.1%
-# net_returns = portfolio_returns - turnover * cost
 def apply_transaction_costs(returns, portfolio, cost=0.001):
-    turnover = portfolio.diff().abs().sum(axis=1)
+    turnover = compute_turnover(portfolio)
     cost_series = turnover * cost
 
     return returns - cost_series
-def evaluate_factors(factors, returns):
-    results = {}
-
-    future_returns = returns.shift(-1)
-
-    for name, factor in factors.items():
-        ic = information_coefficient(factor, future_returns)
-        f_ret = factor_return(factor, returns)
-        sharpe = sharpe_ratio(f_ret)
-
-        results[name] = {
-            "IC": ic,
-            "Sharpe": sharpe
-        }
-
-    return pd.DataFrame(results).T
 
 def plot_performance(strategy_returns, benchmark_returns):
     strategy_cum = (1 + strategy_returns).cumprod()
@@ -63,16 +44,16 @@ def plot_performance(strategy_returns, benchmark_returns):
     plt.legend()
     plt.show()
 
-print("Scores: ", scores)
-print("Prices: ", prices)
-print("Returns: ", returns)
-print("Momentum: ", momentum)
-print("Votality: ", volatility)
-print("Returns: ", returns)
-print("Portfolio: ", portfolio)
-print("Portfolio Returns: ", portfolio_returns)
-print("Sharpe: ", sharpe_ratio(portfolio_returns))
-print("Cumulative Returns: ", cumulative)
+# print("Scores: ", scores)
+# print("Prices: ", prices)
+# print("Returns: ", returns)
+# print("Momentum: ", momentum)
+# print("Votality: ", volatility)
+# print("Returns: ", returns)
+# print("Portfolio: ", portfolio)
+# print("Portfolio Returns: ", portfolio_returns)
+# print("Sharpe: ", sharpe_ratio(portfolio_returns))
+# print("Cumulative Returns: ", cumulative)
 
 # Test
 
@@ -88,9 +69,9 @@ configs = [
 for config in configs:
     score = combine_factors(momentum, volatility, config)
     portfolio = select_portfolio(score, top_n=3)
-    returns = backtest(returns, portfolio)
+    strategy_returns = backtest(returns, portfolio)
 
-    print("Config",config, "Sharpe Ratio",sharpe_ratio(returns))
+    print("Config", config, "Sharpe Ratio", sharpe_ratio(strategy_returns))
 
 prices = load_data(tickers)
 returns = compute_returns(prices)
