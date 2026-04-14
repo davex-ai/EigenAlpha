@@ -1,7 +1,8 @@
 
 import matplotlib.pyplot as plt
 
-from strategy import momentum_factor, volatility_factor, combine_factors, select_portfolio, sharpe_ratio, max_drawdown
+from strategy import momentum_factor, volatility_factor, combine_factors, sharpe_ratio, max_drawdown, \
+    rebalance_portfolio
 from utilities import load_data, compute_returns, backtest, compute_factors, compute_turnover
 from validation import evaluate_factors
 
@@ -16,7 +17,7 @@ valid = momentum.notna() & volatility.notna()
 initial_weights = {"momentum": 0.7, "volatility": 0.3}
 scores = combine_factors(momentum, volatility, initial_weights)
 scores = scores.where(valid)
-portfolio = select_portfolio(scores)
+portfolio = rebalance_portfolio(scores)
 
 benchmark = load_data(["SPY"])
 benchmark_returns = compute_returns(benchmark)
@@ -69,7 +70,7 @@ configs = [
 
 for config in configs:
     score = combine_factors(momentum, volatility, config)
-    portfolio = select_portfolio(score, top_n=3)
+    portfolio = rebalance_portfolio(score, top_n=3)
     strategy_returns = backtest(returns, portfolio)
 
     print("Config", config, "Sharpe Ratio", sharpe_ratio(strategy_returns))
@@ -87,7 +88,7 @@ print(evaluate_factors(factors, returns))
 weights_config = {"momentum": 0.7, "volatility": 0.3}
 
 scores = combine_factors(factors['momentum'], factors['volatility'], weights_config)
-portfolio = select_portfolio(scores, top_n=5)
+portfolio = rebalance_portfolio(scores, top_n=5)
 
 portfolio_returns = backtest(returns, portfolio)
 
