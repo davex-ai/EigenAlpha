@@ -1,7 +1,7 @@
 import yfinance as yf
 
 
-def load_data(tickers, start="2020-01-01", end="2024-01-01"):
+def load_data(tickers, start="2020-01-01", end="2025-01-01"):
     data = yf.download(tickers, start=start, end=end, auto_adjust=True)
     if 'Close' in data.columns:
         data = data['Close']

@@ -1,16 +1,23 @@
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from strategy import momentum_factor, volatility_factor, combine_factors, sharpe_ratio, max_drawdown, \
     rebalance_portfolio
 from utilities import load_data, compute_returns, backtest, compute_factors, compute_turnover
 from validation import evaluate_factors
-from refactor import load_local_tickers
+from data import load_local_tickers
 
 tickers = load_local_tickers()
-
 prices = load_data(tickers)
 returns = compute_returns(prices)
+split_date = "2023-01-01"
+
+train_prices = prices.loc[:split_date]
+test_prices = prices.loc[split_date:]
+
+train_returns = compute_returns(train_prices)
+test_returns = compute_returns(test_prices)
 
 momentum = momentum_factor(prices)
 volatility = volatility_factor(returns)
@@ -69,15 +76,33 @@ configs = [
 
 ]
 
+best_config = None
+best_sharpe = -np.inf
+
 for config in configs:
-    score = combine_factors(momentum, volatility, config)
-    portfolio = rebalance_portfolio(score, top_n=3)
+    factors = compute_factors(train_prices, train_returns)
     strategy_returns = backtest(returns, portfolio)
+    scores = combine_factors(factors["momentum"], factors["volatility"], config)
+    portfolio = rebalance_portfolio(scores)
+
+    ret = backtest(train_returns, portfolio)
+    s = sharpe_ratio(ret)
+
+    if s > best_sharpe:
+        best_sharpe = s
+        best_config = config
 
     print("Config", config, "Sharpe Ratio", sharpe_ratio(strategy_returns))
 
 prices = load_data(tickers)
 returns = compute_returns(prices)
+factors = compute_factors(test_prices, test_returns)
+scores = combine_factors(factors["momentum"], factors["volatility"], best_config)
+portfolio = rebalance_portfolio(scores)
+
+test_perf = backtest(test_returns, portfolio)
+
+print("OUT-OF-SAMPLE SHARPE:", sharpe_ratio(test_perf))
 
 # factors
 factors = compute_factors(prices, returns)
