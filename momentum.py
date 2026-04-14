@@ -31,6 +31,11 @@ def sharpe_ratio(returns, risk_free_rate=0.0):
 
     return np.sqrt(252) * excess_returns.mean() / std
 
+def max_drawdown(cum_returns):
+    peak = cum_returns.cummax()
+    drawdown = (cum_returns - peak) / peak
+    return drawdown.min()
+
 def select_portfolio(scores, top_n=3, ):
     ranks_desc = scores.rank(axis=1, ascending=False)
     ranks_asc = scores.rank(axis=1, ascending=True)

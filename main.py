@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 
-from momentum import momentum_factor, volatility_factor, combine_factors, select_portfolio, sharpe_ratio
+from momentum import momentum_factor, volatility_factor, combine_factors, select_portfolio, sharpe_ratio, max_drawdown
 from utilities import load_data, compute_returns, backtest, compute_factors, compute_turnover
 from validation import evaluate_factors
 
@@ -26,6 +26,7 @@ benchmark_cum = (1 + benchmark_returns.squeeze()).cumprod()
 portfolio_returns = backtest(returns, portfolio)
 
 cumulative = (1 + portfolio_returns).cumprod()
+print("Max Drawdown:", max_drawdown(cumulative))
 cost = 0.001  # 0.1%
 def apply_transaction_costs(returns, portfolio, cost=0.001):
     turnover = compute_turnover(portfolio)
