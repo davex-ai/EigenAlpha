@@ -2,8 +2,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from strategy import momentum_factor, volatility_factor, combine_factors, sharpe_ratio, max_drawdown, \
-    rebalance_portfolio
+from metrics import sharpe_ratio, max_drawdown
+from strategy import momentum_factor, volatility_factor, combine_factors, rebalance_portfolio
 from utilities import load_data, compute_returns, backtest, compute_factors, compute_turnover
 from validation import evaluate_factors
 from data import load_local_tickers

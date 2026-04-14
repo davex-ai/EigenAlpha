@@ -1,4 +1,5 @@
-from strategy import zscore, sharpe_ratio
+from metrics import sharpe_ratio
+from strategy import zscore
 import pandas as pd
 
 
