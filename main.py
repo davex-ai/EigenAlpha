@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 
-from momentum import momentum_factor, volatility_factor, combine_factors, select_portfolio, sharpe_ratio, max_drawdown
+from strategy import momentum_factor, volatility_factor, combine_factors, select_portfolio, sharpe_ratio, max_drawdown
 from utilities import load_data, compute_returns, backtest, compute_factors, compute_turnover
 from validation import evaluate_factors
 
