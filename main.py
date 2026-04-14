@@ -5,8 +5,9 @@ from strategy import momentum_factor, volatility_factor, combine_factors, sharpe
     rebalance_portfolio
 from utilities import load_data, compute_returns, backtest, compute_factors, compute_turnover
 from validation import evaluate_factors
+from refactor import load_local_tickers
 
-tickers = ["AAPL", "MSFT", "GOOG", "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
+tickers = load_local_tickers()
 
 prices = load_data(tickers)
 returns = compute_returns(prices)
