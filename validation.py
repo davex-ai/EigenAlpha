@@ -1,4 +1,4 @@
-from momentum import zscore, sharpe_ratio
+from strategy import zscore, sharpe_ratio
 import pandas as pd
 
 
@@ -8,6 +8,9 @@ def information_coefficient(factor, future_returns):
     ic.title("Information Coefficient")
     ic.plot()
     return ic.mean()
+
+def get_rebalance_dates(dates, freq="M"):
+    return pd.Series(dates, index=dates).resample(freq).last().dropna().values
 
 def factor_return(factor, returns):
     factor = zscore(factor)
