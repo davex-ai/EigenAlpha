@@ -10,7 +10,7 @@ def information_coefficient(factor, future_returns):
     ic.plot()
     return ic.mean()
 
-def get_rebalance_dates(dates, freq="M"):
+def get_rebalance_dates(dates, freq="ME"):
     return pd.Series(dates, index=dates).resample(freq).last().dropna().values
 
 def factor_return(factor, returns):

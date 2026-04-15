@@ -8,7 +8,10 @@ from utilities import load_data, compute_returns, backtest, compute_factors, com
 from validation import evaluate_factors
 from data import load_local_tickers
 
-tickers = load_local_tickers()
+# tickers = load_local_tickers()
+# tickers = [t.replace('.','-') for t in tickers]
+tickers = ["AAPL", "MSFT", "GOOG", 'GOOGL', "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
+
 prices = load_data(tickers)
 returns = compute_returns(prices)
 split_date = "2023-01-01"

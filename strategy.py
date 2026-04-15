@@ -29,7 +29,7 @@ def combine_factors(momentum, volatility, weights):
 #     portfolio = long_portfolio - short_portfolio
 #     return portfolio
 
-def rebalance_portfolio(scores, freq="M", top_n=5):
+def rebalance_portfolio(scores, freq="ME", top_n=5):
     rebalance_dates = get_rebalance_dates(scores.index, freq)
 
     portfolio = pd.DataFrame(0, index=scores.index, columns=scores.columns)
