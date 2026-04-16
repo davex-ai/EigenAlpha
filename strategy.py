@@ -9,15 +9,34 @@ from validation import get_rebalance_dates
 def momentum_factor(prices, window=60):
     return prices.pct_change(window)
 
+@register_factor("size")
+def size_factor(prices):
+    # proxy: price * volume
+    # not perfect, but usable
+    return np.log(prices)
+
+@register_factor("value")
+def value_factor(prices):
+    # cheap stocks = low price relative to mean
+    return -prices / prices.rolling(252).mean()
+
 @register_factor("volatility")
 def volatility_factor(returns, window=60):
     return returns.rolling(window).std()
 
-def combine_factors(momentum, volatility, weights):
-    mom_z = zscore(momentum)
-    vol_z = zscore(volatility)
+def combine_factors(factors, weights):
+    score = None
 
-    score = weights["momentum"] * mom_z + weights["volatility"] * vol_z
+    for name, factor in factors.items():
+        z = zscore(factor)
+
+        if name == "volatility":
+            z = -z
+
+        w = weights.get(name, 0)
+
+        score = z * w if score is None else score + z * w
+
     return score
 
 # def select_portfolio(scores, top_n=3, ):

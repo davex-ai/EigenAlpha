@@ -97,8 +97,8 @@ for config in configs:
 
     print("Config", config, "Sharpe Ratio", sharpe_ratio(strategy_returns))
 
-prices = load_data(tickers)
-returns = compute_returns(prices)
+# prices = load_data(tickers)
+# returns = compute_returns(prices)
 factors = compute_factors(test_prices, test_returns)
 scores = combine_factors(factors["momentum"], factors["volatility"], best_config)
 portfolio = rebalance_portfolio(scores)
