@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 def zscore(df):
     mean = df.mean(axis=1)
@@ -18,3 +19,7 @@ def max_drawdown(cum_returns):
     peak = cum_returns.cummax()
     drawdown = (cum_returns - peak) / peak
     return drawdown.min()
+
+def get_rebalance_dates(dates, freq="ME"):
+    return pd.Series(dates, index=dates).resample(freq).last().dropna().values
+

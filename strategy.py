@@ -3,7 +3,7 @@ import pandas as pd
 
 from metrics import zscore
 from utilities import register_factor
-from validation import get_rebalance_dates
+from metrics import get_rebalance_dates
 
 @register_factor("momentum")
 def momentum_factor(prices, window=60):

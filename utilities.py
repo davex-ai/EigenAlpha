@@ -19,6 +19,11 @@ def compute_returns(prices):
     returns = prices.pct_change().dropna()
     return returns
 
+def apply_transaction_costs(returns, portfolio, cost=0.001):
+    turnover = compute_turnover(portfolio)
+    cost_series = turnover * cost
+
+    return returns - cost_series
 
 def backtest(returns, portfolio, cost=0.001):
     weights = portfolio.div(portfolio.abs().sum(axis=1), axis=0).fillna(0)

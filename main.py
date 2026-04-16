@@ -5,7 +5,7 @@ import numpy as np
 from metrics import sharpe_ratio, max_drawdown
 from strategy import momentum_factor, volatility_factor, combine_factors, rebalance_portfolio
 from utilities import load_data, compute_returns, backtest, compute_factors, compute_turnover
-from validation import evaluate_factors
+from validation import evaluate_factors, alpha_decomposition
 from data import load_local_tickers
 
 # tickers = load_local_tickers()
@@ -14,59 +14,26 @@ tickers = ["AAPL", "MSFT", "GOOG", 'GOOGL', "AMZN", "META", "TSLA", "NVDA", "JPM
 
 prices = load_data(tickers)
 returns = compute_returns(prices)
+
 split_date = "2023-01-01"
-
 train_prices = prices.loc[:split_date]
+train_returns = returns.loc[:split_date]
 test_prices = prices.loc[split_date:]
+test_returns = returns.loc[split_date:]
 
-train_returns = compute_returns(train_prices)
-test_returns = compute_returns(test_prices)
-
-momentum = momentum_factor(prices)
-volatility = volatility_factor(returns)
-valid = momentum.notna() & volatility.notna()
-initial_weights = {"momentum": 0.7, "volatility": 0.3}
-scores = combine_factors(momentum, volatility, initial_weights)
-scores = scores.where(valid)
-portfolio = rebalance_portfolio(scores)
+all_factors = compute_factors(prices, returns)
+print("Factor Evaluation:\n", evaluate_factors(all_factors, returns))
 
 benchmark = load_data(["SPY"])
-benchmark_returns = compute_returns(benchmark)
-
-benchmark_cum = (1 + benchmark_returns.squeeze()).cumprod()
-
-portfolio_returns = backtest(returns, portfolio)
-
-cumulative = (1 + portfolio_returns).cumprod()
-print("Max Drawdown:", max_drawdown(cumulative))
-cost = 0.001  # 0.1%
-def apply_transaction_costs(returns, portfolio, cost=0.001):
-    turnover = compute_turnover(portfolio)
-    cost_series = turnover * cost
-
-    return returns - cost_series
+benchmark_returns = compute_returns(benchmark).squeeze()
 
 def plot_performance(strategy_returns, benchmark_returns):
-    strategy_cum = (1 + strategy_returns).cumprod()
-    benchmark_cum = (1 + benchmark_returns).cumprod()
-
-    plt.figure(figsize=(10,5))
-    plt.plot(strategy_cum, label="Strategy")
-    plt.plot(benchmark_cum, label="Benchmark")
-    plt.title("Strategy vs Benchmark")
+    (1 + strategy_returns).cumprod().plot(label="Strategy", figsize=(10, 5))
+    # Match benchmark dates to strategy dates
+    (1 + benchmark_returns.loc[strategy_returns.index]).cumprod().plot(label="Benchmark")
+    plt.title("Out-of-Sample Performance")
     plt.legend()
     plt.show()
-
-# print("Scores: ", scores)
-# print("Prices: ", prices)
-# print("Returns: ", returns)
-# print("Momentum: ", momentum)
-# print("Votality: ", volatility)
-# print("Returns: ", returns)
-# print("Portfolio: ", portfolio)
-# print("Portfolio Returns: ", portfolio_returns)
-# print("Sharpe: ", sharpe_ratio(portfolio_returns))
-# print("Cumulative Returns: ", cumulative)
 
 # Test
 
@@ -78,57 +45,44 @@ configs = [
     {"momentum": 2.0, "volatility": 0.4},
 
 ]
-
+train_factors = compute_factors(train_prices, train_returns)
 best_config = None
 best_sharpe = -np.inf
 
 for config in configs:
-    factors = compute_factors(train_prices, train_returns)
-    strategy_returns = backtest(returns, portfolio)
-    scores = combine_factors(factors["momentum"], factors["volatility"], config)
+    scores = combine_factors({"momentum": train_factors['momentum'], "volatility": train_factors['volatility']}, config)
     portfolio = rebalance_portfolio(scores)
 
     ret = backtest(train_returns, portfolio)
+    cumulative = (1 + ret).cumprod()
+    print("Max Drawdown:", max_drawdown(cumulative))
     s = sharpe_ratio(ret)
 
     if s > best_sharpe:
         best_sharpe = s
         best_config = config
 
-    print("Config", config, "Sharpe Ratio", sharpe_ratio(strategy_returns))
+    print("Config", config, "Sharpe Ratio", s)
 
-# prices = load_data(tickers)
-# returns = compute_returns(prices)
-factors = compute_factors(test_prices, test_returns)
-scores = combine_factors(factors["momentum"], factors["volatility"], best_config)
+
+test_factors = compute_factors(test_prices, test_returns)
+scores = combine_factors({"momentum": test_factors['momentum'], "volatility": test_factors['volatility']}, best_config)
 portfolio = rebalance_portfolio(scores)
 
 test_perf = backtest(test_returns, portfolio)
+alpha = alpha_decomposition(test_factors, test_returns)
+
+(alpha.cumsum()).plot(title="Test Factor Contributions")
+plt.show()
 
 print("OUT-OF-SAMPLE SHARPE:", sharpe_ratio(test_perf))
 
-# factors
-factors = compute_factors(prices, returns)
-
 # evaluate factors
-print(evaluate_factors(factors, returns))
-
-# strategy
-weights_config = {"momentum": 0.7, "volatility": 0.3}
-
-scores = combine_factors(factors['momentum'], factors['volatility'], weights_config)
-portfolio = rebalance_portfolio(scores, top_n=5)
-
-portfolio_returns = backtest(returns, portfolio)
-
-# benchmark
-benchmark = load_data(["SPY"])
-benchmark_returns = compute_returns(benchmark).squeeze()
+print(evaluate_factors(test_factors, test_perf))
 
 # plot
-plot_performance(portfolio_returns, benchmark_returns)
+plot_performance(test_perf, benchmark_returns)
 
 # sharpe
-print("Strategy Sharpe:", sharpe_ratio(portfolio_returns))
+print("Strategy Sharpe:", sharpe_ratio(test_perf))
 print("Benchmark Sharpe:", sharpe_ratio(benchmark_returns))
-
