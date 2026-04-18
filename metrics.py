@@ -23,3 +23,40 @@ def max_drawdown(cum_returns):
 def get_rebalance_dates(dates, freq="ME"):
     return pd.Series(dates, index=dates).resample(freq).last().dropna().values
 
+def orthogonalize_factors(factors):
+    ortho = {}
+
+    factor_names = list(factors.keys())
+
+    for i, name in enumerate(factor_names):
+        target = zscore(factors[name])
+
+        others = [zscore(factors[n]) for n in factor_names if n != name]
+
+        if not others:
+            ortho[name] = target
+            continue
+
+        X = np.stack([f.values for f in others], axis=2)
+
+        residuals = []
+
+        for t in range(target.shape[0]):
+            y = target.iloc[t].values
+            x = X[t]
+
+            mask = ~np.isnan(y) & ~np.isnan(x).any(axis=1)
+
+            if mask.sum() < 5:
+                residuals.append(np.full_like(y, np.nan))
+                continue
+
+            beta = np.linalg.lstsq(x[mask], y[mask], rcond=None)[0]
+            y_hat = x @ beta
+            resid = y - y_hat
+
+            residuals.append(resid)
+
+        ortho[name] = pd.DataFrame(residuals, index=target.index, columns=target.columns)
+
+    return ortho

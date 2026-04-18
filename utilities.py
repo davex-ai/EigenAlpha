@@ -47,7 +47,6 @@ def register_factor(name):
 
 def compute_factors(prices, returns):
     results = {}
-    # Use a dictionary to store the data available
     context = {"prices": prices, "returns": returns}
 
     for name, fn in FACTORS.items():

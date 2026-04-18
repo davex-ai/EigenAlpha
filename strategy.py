@@ -11,13 +11,10 @@ def momentum_factor(prices, window=60):
 
 @register_factor("size")
 def size_factor(prices):
-    # proxy: price * volume
-    # not perfect, but usable
     return np.log(prices)
 
 @register_factor("value")
 def value_factor(prices):
-    # cheap stocks = low price relative to mean
     return -prices / prices.rolling(252).mean()
 
 @register_factor("volatility")
@@ -38,15 +35,6 @@ def combine_factors(factors, weights):
         score = z * w if score is None else score + z * w
 
     return score
-
-# def select_portfolio(scores, top_n=3, ):
-#     ranks_desc = scores.rank(axis=1, ascending=False)
-#     ranks_asc = scores.rank(axis=1, ascending=True)
-#
-#     long_portfolio = (ranks_desc <= top_n).astype(int)
-#     short_portfolio = (ranks_asc <= top_n).astype(int)
-#     portfolio = long_portfolio - short_portfolio
-#     return portfolio
 
 def rebalance_portfolio(scores, freq="ME", top_n=5):
     rebalance_dates = get_rebalance_dates(scores.index, freq)
