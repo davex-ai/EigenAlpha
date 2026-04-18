@@ -17,6 +17,23 @@ def size_factor(prices):
 def value_factor(prices):
     return -prices / prices.rolling(252).mean()
 
+@register_factor("volume_momentum")
+def volume_momentum(prices, returns):
+    vol = prices * 0 + 1  # fallback if volume missing
+    return vol.rolling(20).mean() / vol.rolling(60).mean()
+
+@register_factor("mean_reversion")
+def mean_reversion(prices):
+    return -prices.pct_change(5)
+
+@register_factor("residual_momentum")
+def residual_momentum(returns):
+    market = returns.mean(axis=1)
+
+    residuals = returns.sub(market, axis=0)
+
+    return residuals.rolling(60).mean()
+
 @register_factor("volatility")
 def volatility_factor(returns, window=60):
     return returns.rolling(window).std()

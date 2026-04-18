@@ -5,7 +5,7 @@ import numpy as np
 from metrics import sharpe_ratio, max_drawdown
 from strategy import  combine_factors, rebalance_portfolio
 from utilities import load_data, compute_returns, backtest, compute_factors
-from validation import evaluate_factors, alpha_decomposition
+from validation import evaluate_factors, alpha_decomposition, information_coefficient
 from data import load_local_tickers
 
 tickers = load_local_tickers()
@@ -68,6 +68,11 @@ for config in configs:
 test_factors = compute_factors(test_prices, test_returns)
 scores = combine_factors({"momentum": test_factors['momentum'], "volatility": test_factors['volatility']}, best_config)
 portfolio = rebalance_portfolio(scores)
+ic_series = information_coefficient(test_factors, test_returns.shift(-1))
+
+ic_series.plot(title="IC Over Time")
+plt.axhline(0, linestyle="--")
+plt.show()
 
 test_perf = backtest(test_returns, portfolio)
 alpha = alpha_decomposition(test_factors, test_returns)
