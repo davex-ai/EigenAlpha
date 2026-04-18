@@ -35,10 +35,12 @@ def backtest(returns, portfolio, cost=0.001, weighting="equal"):
         active = portfolio.loc[date] != 0
 
         if active.sum() == 0:
-            weights.loc[date] = 0
+            weights.loc[date] = 0.0
             continue
 
-        subset_returns = returns.loc[:date, active]
+        lookback = 60
+        active_cols = portfolio.columns[active]
+        subset_returns = returns.loc[:date, active_cols].tail(lookback)
 
         if weighting == "risk_parity":
             w = risk_parity_weights(subset_returns)
@@ -47,7 +49,8 @@ def backtest(returns, portfolio, cost=0.001, weighting="equal"):
         else:
             w = pd.Series(1/active.sum(), index=portfolio.columns[active])
 
-        full_w = pd.Series(0, index=portfolio.columns)
+        w = w.reindex(active_cols).fillna(0)
+        full_w = pd.Series(0.0, index=portfolio.columns)
         full_w[active] = w
 
         weights.loc[date] = full_w
@@ -70,9 +73,9 @@ def register_factor(name):
     return wrapper
 
 
-def compute_factors(prices, returns):
+def compute_factors(prices, returns, volumes):
     results = {}
-    context = {"prices": prices, "returns": returns}
+    context = {"prices": prices, "returns": returns, "vol": volumes}
 
     for name, fn in FACTORS.items():
         # Only pass what the function is asking for
