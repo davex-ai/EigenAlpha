@@ -2,9 +2,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from metrics import sharpe_ratio, max_drawdown
+from metrics import sharpe_ratio, max_drawdown, orthogonalize_factors
 from strategy import  combine_factors, rebalance_portfolio
-from utilities import load_data, compute_returns, backtest, compute_factors
+from utilities import load_data, compute_returns, backtest, compute_factors, risk_parity_weights, mean_variance_weights, \
+    volatility_targeting
 from validation import evaluate_factors, alpha_decomposition, information_coefficient
 from data import load_local_tickers
 
@@ -46,6 +47,9 @@ configs = [
 
 ]
 train_factors = compute_factors(train_prices, train_returns)
+train_factors = orthogonalize_factors(train_factors)
+for k, v in train_factors.items():
+    print(k, type(v), v.shape if hasattr(v, "shape") else "NO SHAPE")
 best_config = None
 best_sharpe = -np.inf
 
@@ -66,7 +70,8 @@ for config in configs:
 
 
 test_factors = compute_factors(test_prices, test_returns)
-scores = combine_factors({"momentum": test_factors['momentum'], "volatility": test_factors['volatility']}, best_config)
+test_factors = orthogonalize_factors(test_factors)
+scores = combine_factors(test_factors, best_config)
 portfolio = rebalance_portfolio(scores)
 ic_series = information_coefficient(test_factors, test_returns.shift(-1))
 
@@ -74,7 +79,8 @@ ic_series.plot(title="IC Over Time")
 plt.axhline(0, linestyle="--")
 plt.show()
 
-test_perf = backtest(test_returns, portfolio)
+test_perf = backtest(test_returns, portfolio, weighting="risk_parity")
+test_perf = volatility_targeting(test_perf)
 alpha = alpha_decomposition(test_factors, test_returns)
 
 (alpha.cumsum()).plot(title="Test Factor Contributions")

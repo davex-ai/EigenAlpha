@@ -18,7 +18,7 @@ def value_factor(prices):
     return -prices / prices.rolling(252).mean()
 
 @register_factor("volume_momentum")
-def volume_momentum(prices, returns):
+def volume_momentum(prices):
     vol = prices * 0 + 1  # fallback if volume missing
     return vol.rolling(20).mean() / vol.rolling(60).mean()
 
