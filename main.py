@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from metrics import sharpe_ratio, max_drawdown
-from strategy import momentum_factor, volatility_factor, combine_factors, rebalance_portfolio
-from utilities import load_data, compute_returns, backtest, compute_factors, compute_turnover
+from strategy import  combine_factors, rebalance_portfolio
+from utilities import load_data, compute_returns, backtest, compute_factors
 from validation import evaluate_factors, alpha_decomposition
 from data import load_local_tickers
 
-# tickers = load_local_tickers()
-# tickers = [t.replace('.','-') for t in tickers]
-tickers = ["AAPL", "MSFT", "GOOG", 'GOOGL', "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
+tickers = load_local_tickers()
+tickers = [t.replace('.','-') for t in tickers]
+# tickers = ["AAPL", "MSFT", "GOOG", 'GOOGL', "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
 
 prices = load_data(tickers)
 returns = compute_returns(prices)
@@ -75,14 +75,12 @@ alpha = alpha_decomposition(test_factors, test_returns)
 (alpha.cumsum()).plot(title="Test Factor Contributions")
 plt.show()
 
-print("OUT-OF-SAMPLE SHARPE:", sharpe_ratio(test_perf))
-
 # evaluate factors
-print(evaluate_factors(test_factors, test_perf))
+print(evaluate_factors(test_factors, test_returns))
 
 # plot
 plot_performance(test_perf, benchmark_returns)
 
 # sharpe
 print("Strategy Sharpe:", sharpe_ratio(test_perf))
-print("Benchmark Sharpe:", sharpe_ratio(benchmark_returns))
+print("Benchmark Sharpe:", sharpe_ratio(benchmark_returns.loc[test_perf.index]))
