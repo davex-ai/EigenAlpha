@@ -1,4 +1,6 @@
 import yfinance as yf
+import numpy as np
+import pandas as pd
 
 
 def load_data(tickers, start="2020-01-01", end="2025-01-01"):
@@ -25,16 +27,38 @@ def apply_transaction_costs(returns, portfolio, cost=0.001):
 
     return returns - cost_series
 
-def backtest(returns, portfolio, cost=0.001):
-    weights = portfolio.div(portfolio.abs().sum(axis=1), axis=0).fillna(0)
+def backtest(returns, portfolio, cost=0.001, weighting="equal"):
+    weights = pd.DataFrame(index=portfolio.index, columns=portfolio.columns)
+
+    for date in portfolio.index:
+        active = portfolio.loc[date] != 0
+
+        if active.sum() == 0:
+            weights.loc[date] = 0
+            continue
+
+        subset_returns = returns.loc[:date, active]
+
+        if weighting == "risk_parity":
+            w = risk_parity_weights(subset_returns)
+        elif weighting == "mean_variance":
+            w = mean_variance_weights(subset_returns)
+        else:
+            w = pd.Series(1/active.sum(), index=portfolio.columns[active])
+
+        full_w = pd.Series(0, index=portfolio.columns)
+        full_w[active] = w
+
+        weights.loc[date] = full_w
+
+    weights = weights.fillna(0)
 
     gross_returns = (weights * returns.shift(-1)).sum(axis=1)
+
     turnover = weights.diff().abs().sum(axis=1)
     costs = turnover * cost
 
-    net_returns = gross_returns - costs
-    return net_returns.dropna()
-
+    return (gross_returns - costs).dropna()
 
 FACTORS = {}
 
@@ -59,3 +83,25 @@ def compute_factors(prices, returns):
 
     return results
 
+def volatility_targeting(returns, target_vol=0.15):
+    vol = returns.rolling(20).std() * np.sqrt(252)
+
+    scaling = target_vol / vol
+    return returns * scaling
+
+def risk_parity_weights(returns):
+    vol = returns.std()
+    inv_vol = 1 / vol
+    weights = inv_vol / inv_vol.sum()
+    return weights
+
+def mean_variance_weights(returns):
+    mu = returns.mean()
+    cov = returns.cov()
+
+    inv_cov = np.linalg.pinv(cov.values)
+
+    weights = inv_cov @ mu.values
+    weights /= weights.sum()
+
+    return pd.Series(weights, index=returns.columns)
