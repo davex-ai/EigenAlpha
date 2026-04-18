@@ -6,12 +6,13 @@ import pandas as pd
 def load_data(tickers, start="2020-01-01", end="2025-01-01"):
     data = yf.download(tickers, start=start, end=end, auto_adjust=True)
     data = data.dropna(axis=1, how="any")
+    volume = data['Volume']
     if 'Close' in data.columns:
         data = data['Close']
     else:
         data = data['Adj Close']
     data = data.dropna(axis=1, how="any")
-    return data
+    return data, volume
 
 
 def compute_turnover(portfolio):

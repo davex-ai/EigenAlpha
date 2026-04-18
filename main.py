@@ -13,7 +13,7 @@ tickers = load_local_tickers()
 tickers = [t.replace('.','-') for t in tickers]
 # tickers = ["AAPL", "MSFT", "GOOG", 'GOOGL', "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
 
-prices = load_data(tickers)
+prices, volumes = load_data(tickers)
 returns = compute_returns(prices)
 
 split_date = "2023-01-01"
@@ -54,7 +54,7 @@ best_config = None
 best_sharpe = -np.inf
 
 for config in configs:
-    scores = combine_factors({"momentum": train_factors['momentum'], "volatility": train_factors['volatility']}, config)
+    scores = combine_factors(train_factors, config)
     portfolio = rebalance_portfolio(scores)
 
     ret = backtest(train_returns, portfolio)
