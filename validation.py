@@ -36,3 +36,4 @@ def alpha_decomposition(factors, returns):
         results[name] = f_ret
 
     return pd.DataFrame(results)
+    
