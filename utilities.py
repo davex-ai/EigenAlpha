@@ -57,7 +57,7 @@ def backtest(returns, portfolio, cost=0.001, weighting="equal"):
 
     weights = weights.fillna(0)
 
-    gross_returns = (weights * returns.shift(-1)).sum(axis=1)
+    gross_returns = (weights * returns.shift(-5)).sum(axis=1)
 
     turnover = weights.diff().abs().sum(axis=1)
     costs = turnover * cost

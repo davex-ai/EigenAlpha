@@ -52,7 +52,7 @@ def combine_factors(factors, weights):
 
     return score
 
-def rebalance_portfolio(scores, freq="ME", top_n=5):
+def rebalance_portfolio(scores, freq="ME", top_n=8):
     rebalance_dates = get_rebalance_dates(scores.index, freq)
 
     portfolio = pd.DataFrame(0.0, index=scores.index, columns=scores.columns)
@@ -64,21 +64,11 @@ def rebalance_portfolio(scores, freq="ME", top_n=5):
         ranks = scores.loc[date].rank(ascending=False)
 
         long = ranks <= top_n
-        short = ranks >= (len(ranks) - top_n + 1)
+        # short = ranks >= (len(ranks) - top_n + 1)
 
-        weights = long.astype(float) - 0.3 * short.astype(float)
-        weights /= weights.abs().sum()
-        long_w = weights.clip(lower=0)
-        short_w = weights.clip(upper=0)
-
-
-        if long_w.sum() > 0:
-            long_w /= long_w.sum()
-
-        if short_w.sum() < 0:
-            short_w /= -short_w.sum()
-
-        weights = long_w + short_w
+        weights = long.astype(float)
+        if weights.sum() > 0:
+            weights /= weights.sum()
 
         portfolio.loc[date] = weights
 

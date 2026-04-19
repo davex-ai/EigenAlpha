@@ -9,9 +9,9 @@ from utilities import load_data, compute_returns, backtest, compute_factors, ris
 from validation import evaluate_factors, alpha_decomposition, information_coefficient_series, information_coefficient
 from data import load_local_tickers
 
-# tickers = load_local_tickers()
-# tickers = [t.replace('.','-') for t in tickers]
-tickers = ["AAPL", "MSFT", "GOOG", 'GOOGL', "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
+tickers = load_local_tickers()
+tickers = [t.replace('.','-') for t in tickers]
+# tickers = ["AAPL", "MSFT", "GOOG", 'GOOGL', "AMZN", "META", "TSLA", "NVDA", "JPM", "V", "UNH", "HD", "PG"]
 
 prices, volumes = load_data(tickers)
 returns = compute_returns(prices)
@@ -49,7 +49,7 @@ configs = [
 
 ]
 train_factors = compute_factors(train_prices, train_returns, train_volumes)
-train_factors = orthogonalize_factors(train_factors)
+# train_factors = orthogonalize_factors(train_factors)
 for k, v in train_factors.items():
     print(k, type(v), v.shape if hasattr(v, "shape") else "NO SHAPE")
 best_config = None
@@ -72,25 +72,28 @@ for config in configs:
 
 
 test_factors = compute_factors(test_prices, test_returns, test_volumes)
-test_factors = orthogonalize_factors(test_factors)
+# test_factors = orthogonalize_factors(test_factors)
 weights = {}
+eval_df = evaluate_factors(train_factors, train_returns)
 
-for name, factor in train_factors.items():
-    ic = information_coefficient(factor, train_returns.shift(-5))
-    weights[name] = max(ic, 0)  # only keep positive alpha
+for name in train_factors:
+    ic = eval_df.loc[name, "IC"]
+    sharpe = eval_df.loc[name, "Sharpe"]
+
+    weights[name] = max(ic * sharpe, 0)
 
 scores = combine_factors(test_factors, weights)
-scores = combine_factors(test_factors, best_config)
+# scores = combine_factors(test_factors, best_config)
 portfolio = rebalance_portfolio(scores)
 print("Net exposure:", portfolio.sum(axis=1).mean())
 print("Test Portfolio:", portfolio)
 for name, factor in test_factors.items():
-    ic_series = information_coefficient_series(factor, test_returns.shift(-1))
+    ic_series = information_coefficient_series(factor, test_returns.shift(-5))
     ic_series.plot(title=f"{name} IC Over Time")
     plt.axhline(0, linestyle="--")
     plt.show()
 
-test_perf = backtest(test_returns, portfolio, weighting="risk_parity")
+test_perf = backtest(test_returns, portfolio, weighting="equal")
 test_perf = volatility_targeting(test_perf)
 alpha = alpha_decomposition(test_factors, test_returns)
 
