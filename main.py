@@ -76,17 +76,22 @@ test_factors = compute_factors(test_prices, test_returns, test_volumes)
 weights = {}
 eval_df = evaluate_factors(train_factors, train_returns)
 
+# main.py — Fix weight computation
 for name in train_factors:
     ic = eval_df.loc[name, "IC"]
     sharpe = eval_df.loc[name, "Sharpe"]
+    # Use IC sign only; normalize so weights sum to 1
+    weights[name] = max(ic, 0)   # or: abs(ic) if you flip factor sign
 
-    weights[name] = max(ic * sharpe, 0)
+# Normalize
+total = sum(weights.values())
+weights = {k: v / total for k, v in weights.items()}
 
+print(f"Computed Test Weights: {weights}")
 scores = combine_factors(test_factors, weights)
 # scores = combine_factors(test_factors, best_config)
-portfolio = rebalance_portfolio(scores)
+portfolio = rebalance_portfolio(scores, top_n=30)
 print("Net exposure:", portfolio.sum(axis=1).mean())
-print("Test Portfolio:", portfolio)
 for name, factor in test_factors.items():
     ic_series = information_coefficient_series(factor, test_returns.shift(-5))
     ic_series.plot(title=f"{name} IC Over Time")

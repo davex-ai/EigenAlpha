@@ -20,19 +20,12 @@ def factor_return(factor, returns):
     return factor_ret
 def evaluate_factors(factors, returns):
     results = {}
-
     future_returns = returns.shift(-5)
 
     for name, factor in factors.items():
         ic = information_coefficient(factor, future_returns)
         f_ret = factor_return(factor, returns)
-        sharpe = sharpe_ratio(f_ret)
-
-        results[name] = {
-            "IC": ic,
-            "Sharpe": sharpe
-        }
-
+        results[name] = {"IC": ic, "Sharpe": sharpe_ratio(f_ret)}
     return pd.DataFrame(results).T
 
 def alpha_decomposition(factors, returns):

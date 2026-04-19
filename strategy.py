@@ -35,16 +35,12 @@ def residual_momentum(returns):
 
 @register_factor("volatility")
 def volatility_factor(returns, window=60):
-    return returns.rolling(window).std()
+    return -returns.rolling(window).std()
 
 def combine_factors(factors, weights):
     score = None
-
     for name, factor in factors.items():
         z = zscore(factor)
-
-        if name == "volatility":
-            z = -z
 
         w = weights.get(name, 0)
 
@@ -54,7 +50,6 @@ def combine_factors(factors, weights):
 
 def rebalance_portfolio(scores, freq="ME", top_n=8):
     rebalance_dates = get_rebalance_dates(scores.index, freq)
-
     portfolio = pd.DataFrame(0.0, index=scores.index, columns=scores.columns)
 
     for date in rebalance_dates:
@@ -62,17 +57,13 @@ def rebalance_portfolio(scores, freq="ME", top_n=8):
             continue
 
         ranks = scores.loc[date].rank(ascending=False)
+        long_mask = ranks <= top_n
 
-        long = ranks <= top_n
-        # short = ranks >= (len(ranks) - top_n + 1)
-
-        weights = long.astype(float)
+        # Long-Only Weights
+        weights = long_mask.astype(float)
         if weights.sum() > 0:
             weights /= weights.sum()
 
         portfolio.loc[date] = weights
 
-    # forward fill positions until next rebalance
-    portfolio = portfolio.ffill().fillna(0)
-
-    return portfolio
+    return portfolio.ffill().fillna(0)
