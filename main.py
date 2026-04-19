@@ -6,7 +6,7 @@ from metrics import sharpe_ratio, max_drawdown, orthogonalize_factors
 from strategy import  combine_factors, rebalance_portfolio
 from utilities import load_data, compute_returns, backtest, compute_factors, risk_parity_weights, mean_variance_weights, \
     volatility_targeting
-from validation import evaluate_factors, alpha_decomposition, information_coefficient, information_coefficient_series
+from validation import evaluate_factors, alpha_decomposition, information_coefficient_series, information_coefficient
 from data import load_local_tickers
 
 # tickers = load_local_tickers()
@@ -73,6 +73,13 @@ for config in configs:
 
 test_factors = compute_factors(test_prices, test_returns, test_volumes)
 test_factors = orthogonalize_factors(test_factors)
+weights = {}
+
+for name, factor in train_factors.items():
+    ic = information_coefficient(factor, train_returns.shift(-5))
+    weights[name] = max(ic, 0)  # only keep positive alpha
+
+scores = combine_factors(test_factors, weights)
 scores = combine_factors(test_factors, best_config)
 portfolio = rebalance_portfolio(scores)
 print("Net exposure:", portfolio.sum(axis=1).mean())

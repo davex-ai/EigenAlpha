@@ -7,7 +7,7 @@ from metrics import get_rebalance_dates
 
 @register_factor("momentum")
 def momentum_factor(prices, window=60):
-    return prices.pct_change(window)
+    return prices.pct_change(window).rolling(10).mean()
 
 @register_factor("size")
 def size_factor(prices):
@@ -31,7 +31,7 @@ def residual_momentum(returns):
 
     residuals = returns.sub(market, axis=0)
 
-    return residuals.rolling(60).mean()
+    return residuals.rolling(60).mean().rolling(5).mean()
 
 @register_factor("volatility")
 def volatility_factor(returns, window=60):
@@ -66,10 +66,11 @@ def rebalance_portfolio(scores, freq="ME", top_n=5):
         long = ranks <= top_n
         short = ranks >= (len(ranks) - top_n + 1)
 
-        weights = long.astype(float) - short.astype(float)
+        weights = long.astype(float) - 0.3 * short.astype(float)
+        weights /= weights.abs().sum()
         long_w = weights.clip(lower=0)
         short_w = weights.clip(upper=0)
-        weights = weights / weights.abs().sum()
+
 
         if long_w.sum() > 0:
             long_w /= long_w.sum()
